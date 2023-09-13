@@ -1,140 +1,66 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import filedialog
-from openpyxl import load_workbook
-from datetime import datetime
-from tkcalendar import Calendar
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
-def add_data_to_excel():
-    customer = customer_combobox.get()
-    site = site_combobox.get()
-    date = date_cal.get_date()
-    net = net_entry.get()
-    version = version_entry.get()
-    total_event = total_event_entry.get()
-    false_event = false_event_entry.get()
-    version_bugs = version_bugs_entry.get()
-    unique_id = unique_id_entry.get()
-    excel_file_path = "O:\\QA\\live.xlsx"
 
-    try:
-        workbook = load_workbook(excel_file_path)
-        if customer in workbook.sheetnames:
-            sheet = workbook[customer]
-        else:
-            sheet = workbook.create_sheet(customer)
+def open_website_and_login(website_url, username_value, password_value):
+    # Create a new Chrome browser instance
+    driver = webdriver.Chrome()
 
-        row = [date, site, net, version, total_event, false_event, version_bugs, unique_id]
-        sheet.append(row)
+    # Open the specified website
+    driver.get(website_url)
 
-        # Add the data to the "follow up" sheet
-        follow_up_sheet = workbook["follow up"]
+    # Use explicit wait to wait for the username field to be clickable
+    wait = WebDriverWait(driver, 10)
+    username_field = wait.until(EC.element_to_be_clickable((By.ID, "username")))
 
-        # Check if the date already exists in the "follow up" sheet
-        date_column = follow_up_sheet["A"]
-        dates = [cell.value for cell in date_column[1:]]  # Skip the header
-        if date in dates:
-            row_index = dates.index(date) + 2  # Add 2 to skip the header and convert to 1-based index
-        else:
-            follow_up_sheet.insert_rows(2)  # Insert a new row at row 2 (adjust as needed)
-            follow_up_sheet.cell(row=2, column=1, value=date)
-            row_index = 2
+    # Click the username field to focus it
+    username_field.click()
 
-        # Mark the site column with a "V"
-        site_index = sites.index(site) + 2  # Add 2 to skip the header and convert to 1-based index
-        follow_up_sheet.cell(row=row_index, column=site_index, value="V")
+    # Send keys to the username field
+    username_field.send_keys(username_value)
 
-        workbook.save(excel_file_path)
-        result_label.config(text="Data added to Excel successfully.")
-    except Exception as e:
-        result_label.config(text=f"Error adding data to Excel: {str(e)}")
+    # Similarly, handle the password field and login button
+
+    password_field = wait.until(EC.element_to_be_clickable((By.ID, "password")))
+    password_field.click()
+    password_field.send_keys(password_value)
+
+    login_button = wait.until(EC.element_to_be_clickable((By.ID, "kc-login")))
+    login_button.click()
+
+    # Wait for user confirmation before closing the browser
+    input("Press Enter to close the browser...")
+    driver.quit()  # Close the browser when the user presses Enter
+
 
 # Create the main window
 root = tk.Tk()
-root.title("Excel Data Entry")
+root.title("Website Automation")
 
-# Create and configure the frame
-frame = ttk.Frame(root, padding=10)
-frame.grid(column=0, row=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-frame.columnconfigure(1, weight=1)
+# Create buttons
+button1 = tk.Button(root, text="CEMEX", command=lambda: open_website_and_login(
+    "https://cemex-manager-app.ception.live/",
+    "ceptionuser",
+    "ceptioncemex?"
+))
+button2 = tk.Button(root, text="Shafir", command=lambda: open_website_and_login(
+    "https://shapir-manager-app.ception.live/",
+    "ceptionuser",
+    "ceptionshapir!"
+))
+button3 = tk.Button(root, text="Heidelberg", command=lambda: open_website_and_login(
+    "https://heidelberg-manager-app.ception.live/",
+    "ceptionuser",
+    "ceptionheidelberg%"
+))
 
-# Customer selection
-customer_label = ttk.Label(frame, text="Customer:")
-customer_label.grid(column=0, row=0, sticky=tk.W)
-customer_combobox = ttk.Combobox(frame, values=["cemex", "Shafir", "hidenberg"])
-customer_combobox.grid(column=1, row=0, sticky=tk.W)
+# Pack buttons into the main window
+button1.pack()
+button2.pack()
+button3.pack()
 
-# Site selection
-site_label = ttk.Label(frame, text="Site:")
-site_label.grid(column=0, row=1, sticky=tk.W)
-sites = ["adhalom","Gdansk", "Gdynia" , "golani","mevocarmel", "modiim", "yvnehe" , "roller", "Etziyona", "London1627","London1656"]
-site_combobox = ttk.Combobox(frame, values=[])
-site_combobox.grid(column=1, row=1, sticky=tk.W)
-
-# Date entry
-date_label = ttk.Label(frame, text="Date:")
-date_label.grid(column=0, row=2, sticky=tk.W)
-date_cal = Calendar(frame)
-date_cal.grid(column=1, row=2, sticky=tk.W)
-
-# Other fields (net, version, total event, false event, version bugs, unique id)
-net_label = ttk.Label(frame, text="Net:")
-net_label.grid(column=0, row=3, sticky=tk.W)
-net_entry = ttk.Entry(frame)
-net_entry.grid(column=1, row=3, sticky=tk.W)
-
-version_label = ttk.Label(frame, text="Version:")
-version_label.grid(column=0, row=4, sticky=tk.W)
-version_entry = ttk.Entry(frame)
-version_entry.grid(column=1, row=4, sticky=tk.W)
-
-total_event_label = ttk.Label(frame, text="Total Event:")
-total_event_label.grid(column=0, row=5, sticky=tk.W)
-total_event_entry = ttk.Entry(frame)
-total_event_entry.grid(column=1, row=5, sticky=tk.W)
-
-false_event_label = ttk.Label(frame, text="False Event:")
-false_event_label.grid(column=0, row=6, sticky=tk.W)
-false_event_entry = ttk.Entry(frame)
-false_event_entry.grid(column=1, row=6, sticky=tk.W)
-
-version_bugs_label = ttk.Label(frame, text="Version Bugs:")
-version_bugs_label.grid(column=0, row=7, sticky=tk.W)
-version_bugs_entry = ttk.Entry(frame)
-version_bugs_entry.grid(column=1, row=7, sticky=tk.W)
-
-unique_id_label = ttk.Label(frame, text="Unique ID:")
-unique_id_label.grid(column=0, row=8, sticky=tk.W)
-unique_id_entry = ttk.Entry(frame)
-unique_id_entry.grid(column=1, row=8, sticky=tk.W)
-
-# Excel file path entry
-#excel_file_path_label = ttk.Label(frame, text="Excel File Path:")
-#excel_file_path_label.grid(column=0, row=9, sticky=tk.W)
-#excel_file_path_entry = ttk.Entry(frame)
-#excel_file_path_entry.grid(column=1, row=9, sticky=(tk.W, tk.E))
-#excel_file_path_entry.insert(0, "O:\\QA\\live.xlsx")
-
-# Add data button
-add_data_button = ttk.Button(frame, text="Add to Excel", command=add_data_to_excel)
-add_data_button.grid(column=1, row=10, sticky=tk.E)
-
-# Result label
-result_label = ttk.Label(frame, text="")
-result_label.grid(column=0, row=11, columnspan=2)
-
-# Update site choices based on customer selection
-def update_site_choices(event):
-    selected_customer = customer_combobox.get()
-    if selected_customer == "Shafir":
-        site_combobox['values'] = ["roller", "Etziyona"]
-    elif selected_customer == "cemex":
-        site_combobox['values'] = ["adhalom","Gdansk", "Gdynia" , "golani","mevocarmel", "modiim", "yvnehe"]
-    elif selected_customer == "hidenberg":
-        site_combobox['values'] = ["London"]
-    else:
-        site_combobox['values'] = []
-
-customer_combobox.bind("<<ComboboxSelected>>", update_site_choices)
-
+# Start the GUI main loop
 root.mainloop()
